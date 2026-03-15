@@ -1,0 +1,50 @@
+{
+  "baseline": {
+    "image_id": {
+      "threshold": 0.010978078897782505,
+      "n_samples": 6306,
+      "description": "Image-level, in-distribution"
+    },
+    "traj_id": {
+      "threshold": 0.054176792701085406,
+      "n_samples": 30,
+      "description": "Trajectory-level, in-distribution"
+    }
+  },
+  "mc_dropout": {
+    "image_id": {
+      "threshold": 0.001518965015738587,
+      "n_samples": 6306,
+      "description": "Image-level, in-distribution"
+    },
+    "traj_id": {
+      "threshold": 0.0061011735722422585,
+      "n_samples": 30,
+      "description": "Trajectory-level, in-distribution"
+    }
+  },
+  "ensemble": {
+    "image_id": {
+      "threshold": 0.002880517781438596,
+      "n_samples": 6306,
+      "description": "Image-level, in-distribution"
+    },
+    "traj_id": {
+      "threshold": 0.022085442443688756,
+      "n_samples": 30,
+      "description": "Trajectory-level, in-distribution"
+    }
+  },
+  "density": {
+    "image_id": {
+      "threshold": 314.74503809151247,
+      "n_samples": 6306,
+      "description": "Image-level, in-distribution"
+    },
+    "traj_id": {
+      "threshold": 477.52362060546875,
+      "n_samples": 30,
+      "description": "Trajectory-level, in-distribution"
+    }
+  }
+}
