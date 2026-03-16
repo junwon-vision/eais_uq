@@ -4,6 +4,32 @@ Failure prediction for a robotic Jenga block-stacking task using a frozen **DINO
 
 ---
 
+## Quickstart: Tutorial Notebook
+
+The main content is `uq.ipynb` — a self-contained walkthrough that requires **no local setup or model training**. Pre-trained checkpoints are downloaded automatically in the first cell.
+
+**Run in Google Colab (recommended):** open `uq.ipynb` and execute the first cell, which clones the repo and downloads all checkpoints:
+
+(If you want to run the notebook locally, you can skip this step and follow the local setup instructions below.)
+```python
+!git clone https://github.com/junwon-vision/eais_uq.git
+
+import gdown
+gdown.download(id="1d9W43ejh3Fv98tmnwhCBqZVYms86U_0U", output="model_checkpoints.zip", quiet=False)
+!unzip -q -o model_checkpoints.zip -d .
+```
+
+The notebook then guides you through:
+
+1. Dataset inspection (Jenga trajectories, front + wrist cameras)
+2. Baseline failure classifier inference
+3. All four UQ methods — formulation, implementation, and per-episode visualization
+4. OOD evaluation on out-of-distribution images and trajectories
+5. Conformal calibration — image-level and trajectory-level thresholds with coverage guarantees
+6. VLM-based failure classifier (Qwen2.5-VL, zero-shot) with conformal calibration
+
+---
+
 ## Methods
 
 | Method | Key idea |
@@ -21,9 +47,9 @@ All methods are calibrated with **split conformal prediction** at both image-lev
 
 ```
 final_hw/
-├── uq.ipynb                              # Self-contained tutorial notebook (see below)
-├── train_failure_classifier_dinov2.py    # Train baseline / MC Dropout / Ensemble classifier
-├── train_density_dinov2.py               # Train flow-matching density estimator
+├── uq.ipynb                              # Main tutorial notebook (start here)
+├── train_failure_classifier_dinov2.py    # (Optional) Train baseline / MC Dropout / Ensemble
+├── train_density_dinov2.py               # (Optional) Train flow-matching density estimator
 ├── visualize_prediction_video_dinov2_uq.py   # UQ-only overlay videos
 ├── visualize_prediction_video_density.py     # P(fail) + density UQ overlay videos
 │
@@ -36,16 +62,18 @@ final_hw/
 ├── vlm_classifier.py  # Qwen2.5-VL zero-shot failure classifier
 ├── config.py          # Shared constants (paths, alpha, device)
 │
-├── checkpoints/
+├── checkpoints/       # Downloaded automatically by the notebook (see above)
 │   ├── failure_classifier_dinov2/{baseline,mc_dropout,ensemble,laplace}/
 │   └── density_dinov2/checkpoint.pt
 │
-└── install.sh         # Conda environment setup (see below)
+└── install.sh         # Conda environment setup (local use only)
 ```
 
 ---
 
-## Setup
+## Local Setup
+
+Only needed if running scripts outside the notebook:
 
 ```bash
 bash install.sh
@@ -56,7 +84,9 @@ Requires CUDA 12.8. See `install.sh` for the full dependency list.
 
 ---
 
-## Training
+## Training (Optional)
+
+The notebook uses pre-trained checkpoints downloaded via gdown. If you want to train from scratch:
 
 **Failure classifier** (baseline / MC Dropout / Ensemble):
 
@@ -80,7 +110,7 @@ python train_density_dinov2.py train \
 
 ---
 
-## Visualization
+## Visualization (Optional)
 
 Generate per-episode videos with UQ score overlays and conformal threshold line:
 
@@ -99,26 +129,9 @@ python visualize_prediction_video_density.py \
 
 ---
 
-## Tutorial Notebook
-
-`uq.ipynb` is a self-contained walkthrough covering:
-
-1. Dataset inspection (Jenga trajectories, front + wrist cameras)
-2. Baseline failure classifier inference
-3. All four UQ methods — implementation and per-episode visualization
-4. OOD evaluation on out-of-distribution images and trajectories
-5. Conformal calibration — image-level and trajectory-level thresholds
-6. VLM-based failure classifier (Qwen2.5-VL, zero-shot) with conformal calibration
-
-```bash
-jupyter notebook uq.ipynb
-```
-
----
-
 ## Dataset
 
-Episodes are stored as `.pkl` files with keys `front_cam`, `wrist_cam`, `failure` (per-timestep binary label).
+Episodes are stored as `.pkl` files with keys `front_cam`, `wrist_cam`, `failure` (per-timestep binary label). Downloaded as part of the checkpoint archive.
 
 ```
 datasets/dreamer_fixed/
@@ -131,4 +144,5 @@ datasets/dreamer_fixed/
 
 ## References
 - Ren et al. (2023) — KnowNo: [arxiv:2307.01928](https://arxiv.org/abs/2307.01928)
-- Seo et al. (2025) — UniSafe: [arxiv:2505.00779](https://arxiv.org/abs/2505.00779)
+- Seo et al. (2025) — UniSafe: [arxiv:2505.00779](https://arxiv.org/abs/2505.00779), [code](https://github.com/CMU-IntentLab/UNISafe)
+- Xu et al. (2025) — FAIL-Detect: [https://github.com/CXU-TRI/FAIL-Detect](https://github.com/CXU-TRI/FAIL-Detect)
