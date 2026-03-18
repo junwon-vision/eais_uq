@@ -329,6 +329,51 @@ def render_frame(ep, t, probs, uq_scores, uq_label, mode, T,
     return frame
 
 
+def render_frame_no_graph(ep, t, probs, uq_scores, uq_label, mode, T,
+                          threshold=None):
+    """
+    Render a frame with only header + camera views (no UQ graph).
+    """
+    front = _get_image(ep["front_cam"][t])
+    wrist = _get_image(ep["wrist_cam"][t])
+
+    if threshold is not None and uq_scores[t] > threshold:
+        front = front[:, :, ::-1].copy()
+        wrist = wrist[:, :, ::-1].copy()
+
+    sep = np.zeros((256, 4, 3), dtype=np.uint8)
+    cam_row = np.concatenate([front, sep, wrist], axis=1)
+
+    prob_now = probs[t]
+    border_color = (np.array([255, 0, 0], dtype=np.uint8) if prob_now > 0.5
+                    else np.array([0, 255, 0], dtype=np.uint8))
+    cam_row[:BORDER_W, :] = border_color
+    cam_row[-BORDER_W:, :] = border_color
+    cam_row[:, :BORDER_W] = border_color
+    cam_row[:, -BORDER_W:] = border_color
+
+    cam_w = cam_row.shape[1]
+
+    header_h = 32
+    header = np.zeros((header_h, cam_w, 3), dtype=np.uint8) + 30
+    header_bgr = header[:, :, ::-1].copy()
+
+    uq_now = uq_scores[t]
+    pred = "FAILURE" if prob_now > 0.5 else "OK"
+    pred_color = (60, 60, 255) if prob_now > 0.5 else (60, 200, 60)
+
+    cv2.putText(header_bgr, f"t={t}/{T}", (8, 22),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.55, (220, 220, 220), 1)
+    cv2.putText(header_bgr, pred, (120, 22),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.6, pred_color, 2)
+    cv2.putText(header_bgr, f"P={prob_now:.3f}  {uq_label}={uq_now:.4f}",
+                (230, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (200, 200, 200), 1)
+    header = header_bgr[:, :, ::-1].copy()
+
+    frame = np.concatenate([header, cam_row], axis=0)
+    return frame
+
+
 # ---------------------------------------------------------------------------
 # Episode video
 # ---------------------------------------------------------------------------
@@ -357,6 +402,36 @@ def render_episode_video(ep, ep_idx, probs, uq_scores, uq_label, mode,
         save_dir = OUTPUT_DIR / "videos"
         save_dir.mkdir(parents=True, exist_ok=True)
         output_path = save_dir / f"ep{ep_idx:04d}_{mode}_uq_T{T}.mp4"
+    else:
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    imageio.mimwrite(str(output_path), frames, fps=fps, codec="libx264",
+                     macro_block_size=1,
+                     output_params=["-pix_fmt", "yuv420p"])
+    return str(output_path)
+
+
+def render_episode_video_no_graph(ep, ep_idx, probs, uq_scores, uq_label, mode,
+                                  fps=10, threshold=None,
+                                  output_path=None):
+    """
+    Render all frames of an episode with only header + camera views (no UQ graph).
+
+    Returns the path to the written file.
+    """
+    T = len(probs)
+
+    frames = []
+    for t in range(T):
+        frame = render_frame_no_graph(ep, t, probs, uq_scores, uq_label, mode, T,
+                                      threshold=threshold)
+        frames.append(frame)
+
+    if output_path is None:
+        save_dir = OUTPUT_DIR / "videos"
+        save_dir.mkdir(parents=True, exist_ok=True)
+        output_path = save_dir / f"ep{ep_idx:04d}_{mode}_imgonly_T{T}.mp4"
     else:
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
